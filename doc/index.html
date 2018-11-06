@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Carrot² search results clustering plugin for ElasticSearch</title>
+    <title>Carrot² search results clustering from ElasticSearch</title>
 
     <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
     <link href="assets/css/prettify.css" rel="stylesheet" />
@@ -38,8 +38,8 @@
       <div class="row" id="noes">
         <div class="span12">
           <div class="alert alert-error">
-            <i class="icon-exclamation-sign"></i> <strong>ElasticSearch instance cannot be reached.</strong>
-            This manual requires a running instance of ES to render outputs.
+            <i class="icon-exclamation-sign"></i> <strong>Instancia do ElasticSearch não encontrada.</strong>
+            Este arquivo precisa de uma instancia em execução para funcionar.
           </div>
         </div>
       </div>
@@ -47,9 +47,9 @@
       <div class="row">
         <div class="span12">
           <div class="page-header">
-            <h1>elasticsearch-carrot2</h1>
+            <h1>Clusterização dos dados presentes em uma indice do ElasticSearch</h1>
 
-            <p>A plugin for clustering search results in real time. Includes
+            <p>clustering search results in real time. Includes
             clustering algorithms from the <a href="http://project.carrot2.org">Carrot<sup>2</sup></a> project.</p>
             <p>
               <a href="../CHANGES.txt"><span class="badge"><i class="icon-list icon-white"></i> CHANGES.txt</span></a>
@@ -59,7 +59,7 @@
         </div>
       </div>
 
-      <div class="row">
+      <!-- <div class="row">
         <div class="span1"><span class="step">0</span></div>
         <div class="span11 dropped">
           <p>
@@ -72,14 +72,16 @@
 http.cors.enabled: true
 http.cors.allow-origin: /(null)|(https?:\/\/localhost(:[0-9]+)?)|(https?:\/\/cdn\.rawgit\.com(:[0-9]+)?)/</pre>
         </div>
-      </div>
+      </div> -->
 
       <div class="row">
         <div class="span1"><span class="step">1</span></div>
         <div class="span11 dropped">
           <form class="form-inline" id="indexform">
-            First, <button class="btn btn-primary" id="indexbtn">index sample</button>
-            documents to be clustered.
+            <!-- First, <button class="btn btn-primary" id="indexbtn">index sample</button>
+             -->
+            É necessário que o indice desejado esteja indexado corretamente no ElasticSearch 
+            para que os documentos sejam clusterizados.
           </form>
         </div>
       </div>
@@ -87,14 +89,13 @@ http.cors.allow-origin: /(null)|(https?:\/\/localhost(:[0-9]+)?)|(https?:\/\/cdn
       <div class="row">
         <div class="span1"><span class="step">2</span></div>
         <div class="span11 dropped">
-          Then, type in a query like:
+          Escreva uma Query de busca:
           <form class="form-inline" id="searchform">
-            <input id="query" type="text" style="width: 17em" value="data mining" />
-            and
-            <button class="btn btn-primary" id="search">Search, cluster &amp; visualize</button>
-            with
+            <input id="query" type="text" style="width: 17em" value="dog" />
+            e
+            <button class="btn btn-primary" id="search">Busque, clusterize &amp; visualize</button>
+            usando o algoritmo 
             <select class="selectpicker" style="width: 8em" id="algorithm"></select>
-            algorithm.
             <span id="progress"></span>
           </form>
         </div>
@@ -109,13 +110,13 @@ http.cors.allow-origin: /(null)|(https?:\/\/localhost(:[0-9]+)?)|(https?:\/\/cdn
         </div>
       </div>
 
-      <div class="row" style="margin-top: 10px;">
+      <!-- <div class="row" style="margin-top: 10px;">
         <div class="span1"><span class="step">3</span></div>
         <div class="span11 dropped">
           Finally, check out the <a href="examples.html">clustering query/response REST API examples
           and more thorough documentation</a>.
         </div>
-      </div>
+      </div> -->
 
       <script src="assets/js/jquery-2.0.2.min.js"></script>
       <script src="assets/js/carrotsearch.circles.js"></script>
@@ -147,10 +148,43 @@ http.cors.allow-origin: /(null)|(https?:\/\/localhost(:[0-9]+)?)|(https?:\/\/cdn
             var query = $("#query").val();
             var algorithm = $("#algorithm option:selected").val();
 
+            console.log(query, algorithm);
             // ES search request data
+            // var request = {
+            //   "search_request": {
+            //     "_source": [ "reviewText"],
+            //     "query": {
+            //       "match": { "content": query }
+            //     },
+            //     "size": 100
+            //   },
+
+            //   "query_hint": query,
+            //   "algorithm": algorithm,
+            //   "field_mapping": {
+            //     "reviewText": ["_source.reviewText"],
+            //   }
+            // };
+
+            // var request = {
+            //   "search_request": {
+            //     "_source": [ "reviewText", "summary" ],
+            //     "query": {
+            //       "match": { "content": query }
+            //     },
+            //     "size": 1000
+            //   },
+            //   "query_hint": query,
+            //   "algorithm": algorithm,
+            //   "field_mapping": {
+            //     "reviewText": ["_source.reviewText"],
+            //     "summary": ["_source.summary"],
+            //   }
+            // };
+
             var request = {
               "search_request": {
-                "_source": [ "url", "title", "content" ],
+                "_source": [ "reviewText"],
                 "query": {
                   "match": { "content": query }
                 },
@@ -160,15 +194,37 @@ http.cors.allow-origin: /(null)|(https?:\/\/localhost(:[0-9]+)?)|(https?:\/\/cdn
               "query_hint": query,
               "algorithm": algorithm,
               "field_mapping": {
-                "title": ["_source.title"],
-                "content": ["_source.content"],
-                "url": ["_source.url"]
+                "reviewText": ["_source.reviewText"],
               }
             };
 
+            console.log(request);
             $progress.text("loading...");
-            $.post(window.ES_URL + "/test/test/_search_with_clusters",
-              JSON.stringify(request), function (result) {
+
+  //           var getUrl = window.ES_URL + "/clusterizable/reviews/_search_with_clusters?"
+  // + "q=data+mining&"
+  // + "size=100&"
+  // + "field_mapping_title=_source.title&"
+  // + "field_mapping_content=_source.content";
+ 
+
+            var getUrl = "http://0.0.0.0:9200/clusterizable/reviews/_search_with_clusters?q=dog&size=1000&field_mapping_title=_source.summary&field_mapping_content=_source.reviewText";
+            // Run HTTP GET via jquery and render cluster labels.
+            // $.get(getUrl,
+            //   function(response) {
+            //     $("#cluster-httpget-result").text(
+            //       dumpClusters([], response.clusters).join("\n"));
+            // });
+
+            // $.post(window.ES_URL + "/clusterizable/reviews/_search_with_clusters",
+            //   JSON.stringify(request), function (result) {
+            //     if (result.hits.total > 0) {
+            //       $progress.text("");
+            //     } else {
+            //       $progress.text("no results found");
+            //     }
+
+            $.get(getUrl, function (result) {
                 if (result.hits.total > 0) {
                   $progress.text("");
                 } else {
@@ -235,12 +291,15 @@ http.cors.allow-origin: /(null)|(https?:\/\/localhost(:[0-9]+)?)|(https?:\/\/cdn
               success: function(response) {
                 var indexReady = response &&
                                  response.indices &&
-                                 response.indices.test;
+                                 response.indices.clusterizable;
     
                 // Reindex once per window session, even if the index seems to be ready.
                 if (indexReady) {
+                  console.log("Rodei Visualização");
                   doVisualize();
                 } else {
+                  console.log("Rodei Index");
+
                   doIndex(function(current, total) {
                     if (current < total) {
                       $("#indexbtn").text(current < total ? "Indexing... " + current : "[you've indexed]");
